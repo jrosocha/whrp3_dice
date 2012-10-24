@@ -1,0 +1,464 @@
+<!DOCTYPE html PUBLIC -//W3C//DTD HTML 4.01 Transitional//EN http://www.w3.org/TR/html4/loose.dtd>
+<html>
+<head>
+	<META HTTP-EQUIV=pragma CONTENT=no-cache>
+	<META HTTP-EQUIV=Expires CONTENT=-1>
+	<META HTTP-EQUIV=Content-Type content=text/html; charset=ISO-8859-1>
+	<title>WHRP3 Dice</title>
+	<style type=text/css>
+	      body { font-family: Arial, MS Trebuchet, sans-serif; font-size: 10px;}
+	      table { font-family: Arial, MS Trebuchet, sans-serif; font-size: 10px;}
+	      .arrayTable { border: 1px dashed #999; background-color: #DDD; padding: 5px;}
+	      .arrayTr { border: 1px dashed #999; background-color: #DDD; padding: 5px;}
+	      .arrayTd { border: 1px dashed #999; background-color: #DDD; padding: 5px; vertical-align: top;}
+	      .associativeTable { border: 8px solid #999; background-color: #999; padding: 1px;}
+	      .associativeTr { border: 1px solid #999; background-color: #AAA; padding: 5px;}
+	      .associativeTd { border: 1px solid #999; background-color: #AAA; padding: 5px; vertical-align: top;}
+	</style>
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+</head>
+
+<div id="inputDiv">
+
+	<label># of Fortune Dice</label> 
+	<input id="inputFortune" type="text" />
+
+	<label># of Characteristic Dice</label> 
+	<input id="inputCharacteristic" type="text" />
+
+	<label># of Reckless Dice</label> 
+	<input id="inputReckless" type="text" />	
+
+	<label># of Conservative Dice</label> 
+	<input id="inputConservative" type="text" />
+
+	<label># of Experitse Dice</label> 
+	<input id="inputExpertise" type="text" />				
+
+</div>
+<div id="chart_div"></div>
+<div id="log">
+</div>
+<input type="button" onclick="redraw();" value="Go" />
+
+
+
+<body>
+<div>
+</div>
+
+<script>
+google.load("visualization", "1", {packages:["corechart"]});
+
+/*
+Trait: 2 empty, 4 successes, 2 boons
+Conservative: 1 empty, 2 boons, 4 successes, 1 succ+boon, 2 succ+delay
+Reckless: 2 empty, 2 banes, 1 double-boon, 1 succ+boon, 2 double-succ, 2 succ+fatigue
+Fortune: 3 empty, 2 successes, 1 boon
+Misfortune: 3 empty, 2 failures, 1 bane
+Chaos: 1 empty, 1 chaos star, 1 bane, 1 double-bane, 2 failures, 2 double-failures
+*/
+var dieHash = {
+		Template:{
+					success_1:[0,0],
+					success_2:[0,0],
+					success_1_boon_1:[0,0],
+					success_1_exert_1:[0,0],
+					success_1_delay_1:[0,0],
+					righteous_success_1:[0,0],
+					sigmars_comet_1:[0,0],
+					boon_1:[0,0],
+					boon_2:[0,0],
+					challenge_1:[0,0],
+					challenge_2:[0,0],
+					bane_1:[0,0],
+					bane_2:[0,0],
+					chaos_star_1:[0,0],
+					nothing:[0,0]					
+		},
+		Expertise:{
+					success_1:[1,6],
+					success_2:[0,0],
+					success_1_boon_1:[0,0],
+					success_1_exert_1:[0,0],
+					success_1_delay_1:[0,0],
+					righteous_success_1:[1,6],
+					sigmars_comet_1:[1,6],
+					boon_1:[2,6],
+					boon_2:[0,0],
+					challenge_1:[0,0],
+					challenge_2:[0,0],
+					bane_1:[0,0],
+					bane_2:[0,0],
+					chaos_star_1:[0,0],
+					nothing:[1,6]					
+		},		
+		Reckless:{
+					success_1:[0,10],
+					success_2:[2,10],
+					success_1_boon_1:[1,10],
+					success_1_exert_1:[2,10],
+					success_1_delay_1:[0,0],
+					righteous_success_1:[0,0],
+					sigmars_comet_1:[0,0],
+					boon_1:[0,0],
+					boon_2:[1,10],
+					challenge_1:[0,0],
+					challenge_2:[0,0],
+					bane_1:[2,10],
+					bane_2:[0,0],
+					chaos_star_1:[0,0],
+					nothing:[2,10]					
+		},			
+		Conservative:{
+					success_1:[4,10],
+					success_2:[0,0],
+					success_1_boon_1:[1,10],
+					success_1_exert_1:[0,0],
+					success_1_delay_1:[2,10],
+					righteous_success_1:[0,0],
+					sigmars_comet_1:[0,0],
+					boon_1:[2,10],
+					boon_2:[0,0],
+					challenge_1:[0,0],
+					challenge_2:[0,0],
+					bane_1:[0,0],
+					bane_2:[0,0],
+					chaos_star_1:[0,0],
+					nothing:[1,10]					
+		},		
+		Characteristic:{
+					success_1:[4,8],
+					success_2:[0,0],
+					success_1_boon_1:[0,0],
+					success_1_exert_1:[0,0],
+					success_1_delay_1:[0,0],
+					righteous_success_1:[0,0],
+					sigmars_comet_1:[0,0],
+					boon_1:[2,8],
+					boon_2:[0,0],
+					challenge_1:[0,0],
+					challenge_2:[0,0],
+					bane_1:[0,0],
+					bane_2:[0,0],
+					chaos_star_1:[0,0],
+					nothing:[2,8]					
+		},		
+		Fortune:{
+					success_1:[2,6],
+					success_2:[0,6],
+					success_1_boon_1:[0,6],
+					success_1_exert_1:[0,6],
+					success_1_delay_1:[0,6],
+					righteous_success_1:[0,6],
+					sigmars_comet_1:[0,6],
+					boon_1:[1,6],
+					boon_2:[0,6],
+					challenge_1:[0,6],
+					challenge_2:[0,6],
+					bane_1:[0,6],
+					bane_2:[0,6],
+					chaos_star_1:[0,6],
+					nothing:[3,6]},
+		Misfortune:{
+					success_1:[0,6],
+					success_2:[0,6],
+					success_1_boon_1:[0,6],
+					success_1_exert_1:[0,6],
+					success_1_delay_1:[0,6],
+					righteous_success_1:[0,6],
+					sigmars_comet_1:[0,6],
+					boon_1:[0,6],
+					boon_2:[0,6],
+					challenge_1:[2,6],
+					challenge_2:[0,6],
+					bane_1:[1,6],
+					bane_2:[0,6],
+					chaos_star_1:[0,6],
+					nothing:[3,6]},
+		Challenge:{
+					success_1:[0,0],
+					success_2:[0,0],
+					success_1_boon_1:[0,0],
+					success_1_exert_1:[0,0],
+					success_1_delay_1:[0,0],
+					righteous_success_1:[0,0],
+					sigmars_comet_1:[0,0],
+					boon_1:[0,0],
+					boon_2:[0,0],
+					challenge_1:[2,8],
+					challenge_2:[2,8],
+					bane_1:[1,8],
+					bane_2:[1,8],
+					chaos_star_1:[1,8],
+					nothing:[1,8]					
+		}					
+	};
+/*
+function x(num_fortune, num_misfortune) {
+
+	var output = "";
+
+	var totalPossibleSuccesses = (totalPossibleSuccessesByDie(Fortune) * num_fortune);
+	var totalPossibleChallengesByDie = (totalPossibleSuccessesByDie(Fortune) * num_fortune);
+
+	for (var possibeSuccessCount = 0; i < totalPossibleSuccesses; possibeSuccessCount++) {
+
+
+
+	}
+}
+*/
+
+function totalPossibleSuccessesByDie(die) {
+	var success = 0;
+	if (dieHash[die].righteous_success_1[0] > 0) {success = 1;}
+	if (dieHash[die].success_1[0] > 0) {success = 1;}
+	if (dieHash[die].success_1_boon_1[0] > 0) {success = 1;}
+	if (dieHash[die].success_1_delay_1[0] > 0) {success = 1;}
+	if (dieHash[die].success_1_exert_1[0] > 0) {success = 1;}
+	if (dieHash[die].success_2[0] > 0) {success = 2}
+	return success;
+}
+
+/** will have to figure out how to get rightous success in the chance for 2 successes 
+	return an array of numerator,denominator for chance of 1,2 successes
+**/ 
+function successRatioByDie(die) {
+	var success = 0.0;
+
+	if (dieHash[die].righteous_success_1[0] > 0) {		
+		success = success + (dieHash[die].righteous_success_1[0]/dieHash[die].righteous_success_1[1]);		
+	}
+
+	if (dieHash[die].sigmars_comet_1[0] > 0) {		
+		success = success + (dieHash[die].sigmars_comet_1[0]/dieHash[die].sigmars_comet_1[1]);
+	}	
+
+	if (dieHash[die].success_1[0] > 0) {		
+		success = success + (dieHash[die].success_1[0]/dieHash[die].success_1[1]);
+	}
+
+	if (dieHash[die].success_2[0] > 0) {
+		success = success + (dieHash[die].success_2[0]/dieHash[die].success_2[1]);
+	}
+
+	if (dieHash[die].success_1_boon_1[0] > 0) {		
+		success = success + (dieHash[die].success_1_boon_1[0]/dieHash[die].success_1_boon_1[1]);
+	}
+
+	if (dieHash[die].success_1_delay_1[0] > 0) {
+		success = success + (dieHash[die].success_1_delay_1[0]/dieHash[die].success_1_delay_1[1]);		
+	}	
+
+	if (dieHash[die].success_1_exert_1[0] > 0) {		
+		if (dieHash[die].success_1_exert_1[0] > 0) {
+			success = success + (dieHash[die].success_1_exert_1[0]/dieHash[die].success_1_exert_1[1]);		
+		}
+	}	
+	
+	return success;
+}
+
+function challengeRatioByDie(die) {
+	var challenge = 0;
+	/*
+	if (dieHash[die].1_chaos_star[0] > 0) {challenge = 1;}
+	if (dieHash[die].1_challenge[0] > 0) {challenge = 1;}
+	if (dieHash[die].2_challenge[0] > 0) {challenge = 2;}
+	*/
+	return challenge;
+}
+
+/**math **/
+
+function productRange(a,b) {
+  var product=a,i=a;
+
+  while (i++<b) {
+    product*=i;
+  }
+  return product;
+}
+
+function combinations(n,k) {
+  if (k == 0) return(1);
+  if (n==k) {
+    return 1;
+  } else {
+    k=Math.max(k,n-k);
+    return productRange(k+1,n)/productRange(1,n-k);
+  }
+}
+
+function permutations(n,k) {
+  return productRange(k+1,n);
+}
+
+/*
+ * Exactly k successes in n trials = nCk * p^k * q^(n-k)
+ * n = # of trials
+ * k = # of successes
+ * p = prob of success (q= prob of failure or 1-p)
+*/
+function probability(n,k,p) {
+	//1-p is the probability of failure
+	return combinations(n,k) * Math.pow(p,k) * Math.pow((1-p),(n-k));
+}
+
+function factorial(n) {
+	if (n <= 1) return(1); else return n*factorial(n-1);
+} // factorial
+
+/* Prob of between k1 and k2 successes
+ * k1 <= X <= k2 
+*/
+function distribution(n,p,k1,k2) {
+	var sum = 0;
+	for (var k = k1; k <= k2; k++) {
+		sum += probability(n,k,p);
+	}
+	return sum;;
+}
+
+/*
+ * Returns the GCD of the given integers. Each input must be non-negative.
+ */
+function gcd(x, y) {
+	while (y != 0) {
+		var z = x % y;
+		x = y;
+		y = z;
+	}
+	return x;
+}
+/** end math */
+
+var log = "";
+
+function padArrayWithZeros( arr, length) {
+	if (arr.length < length) {
+		var difference = length - arr.length;
+		for (var i = 0; i < difference; i++) {
+			arr.push(0);
+		}
+	}
+	return arr;
+} 
+
+function redraw() {
+	$('#log').html("");
+	log = "";
+
+
+	var chartData = [["Success Sides >= N","Fortune","Characteristic","Expertise","Reckless","Conservative"]];
+	var fortuneData = [];
+	var characteristicData = [];
+	var expertiseData = [];
+	var recklessData = [];
+	var conservativeData = [];
+
+	var fortuneDieCount = parseInt($('#inputFortune').val());
+
+	if (fortuneDieCount > 0) {
+		fortuneData = calculateAndDisplay("Fortune", fortuneDieCount);
+	} else {
+		fortuneDieCount = 0;
+	}
+
+	var characteristicDieCount = parseInt($('#inputCharacteristic').val());
+	if (characteristicDieCount > 0) {
+		characteristicData = calculateAndDisplay("Characteristic", characteristicDieCount);
+	} else {
+		characteristicDieCount = 0;
+	}
+
+	var expertiseDieCount = parseInt($('#inputExpertise').val());
+	if (expertiseDieCount > 0) {
+		expertiseData = calculateAndDisplay("Expertise", expertiseDieCount);
+	} else {
+		expertiseDieCount = 0;
+	}
+
+	var recklessDieCount = parseInt($('#inputReckless').val());
+	if (recklessDieCount > 0) {
+		recklessData = calculateAndDisplay("Reckless", recklessDieCount);
+	} else {
+		recklessDieCount = 0;
+	}		
+
+	var conservativeDieCount = parseInt($('#inputConservative').val());
+	if (conservativeDieCount > 0) {
+		conservativeData = calculateAndDisplay("Conservative", conservativeDieCount);
+	} else {
+		conservativeDieCount = 0;
+	}
+
+	var big = Math.max(fortuneDieCount, characteristicDieCount, expertiseDieCount, recklessDieCount, conservativeDieCount);
+	fortuneData = padArrayWithZeros(fortuneData, big);
+	characteristicData = padArrayWithZeros(characteristicData, big);
+	expertiseData = padArrayWithZeros(expertiseData, big);
+	recklessData = padArrayWithZeros(recklessData, big);
+	conservativeData = padArrayWithZeros(conservativeData, big);
+
+	/* turn the matrix on its side to fit the charting tool */
+	for (var i = 0; i < big; i++) {
+		chartData.push([(i+1) + "", fortuneData[i], characteristicData[i], expertiseData[i], recklessData[i], conservativeData[i]]);
+	}
+
+	drawChart(chartData);
+}
+
+
+function drawChart(data_) {
+	var data = google.visualization.arrayToDataTable(data_);
+
+	var options = {
+	  title: '% Chance of At Least X Success Sides By Die',
+	  colors: ['grey', 'blue', 'gold', 'red', 'green'],
+	  seriesType: "bar"
+	};
+
+	var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+	chart.draw(data, options);
+}
+
+function calculateAndDisplay(dieName, qty) {
+
+	var ratio = successRatioByDie(dieName);
+	var cumulativeChanceForCompleteSuccess = 1;
+	var totalPossibleSuccesesForSet = 0;
+
+	var returnData = [];	
+	log = log + dieName + " die chance for (1) success is " + (100*ratio).toPrecision(4) + "%.<br/>";
+	for(var dieIndex = 1; dieIndex <= qty; dieIndex++) {
+
+
+		totalPossibleSuccesesForSet = totalPossibleSuccesesForSet + totalPossibleSuccessesByDie(dieName)
+		var dieIndexOrLessOfQty =  distribution(qty, ratio, 0,dieIndex);
+		var betweenOneAndDieIndexOfQty =  distribution(qty, ratio, 1,dieIndex);
+		log = log + " + Between 1 and " + dieIndex + " successes of " + qty + " = " + (betweenOneAndDieIndexOfQty*100).toPrecision(4) + "%.<br/>";
+		cumulativeChanceForCompleteSuccess = cumulativeChanceForCompleteSuccess * ratio;
+		log = log + " + Chance of exactly " + dieIndex + " out of " + dieIndex + " successes = " + (cumulativeChanceForCompleteSuccess*100).toPrecision(4) + "%.<br>"; 
+		if (dieIndex == 1) {
+			returnData.push(parseFloat((betweenOneAndDieIndexOfQty*100).toPrecision(4)));
+		}
+		if (dieIndex < qty) {
+			var atLeastDieIndexPlusOne = 1 - dieIndexOrLessOfQty;
+			log = log + " + At least " + (dieIndex + 1) + " successes = " + (atLeastDieIndexPlusOne*100).toPrecision(4) + "%.<br/>";
+			returnData.push(parseFloat((atLeastDieIndexPlusOne*100).toPrecision(4)));
+		}
+	}	
+	log = log + " + Maximum # of success hammers for like dice (not counting rerolls for righteous success) is " + totalPossibleSuccesesForSet + ".<br/>";
+	$('#log').html(log);
+	return returnData;
+}
+
+
+
+</script>
+</body>
+</html>
