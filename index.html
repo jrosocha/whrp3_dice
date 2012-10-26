@@ -275,9 +275,9 @@ function challengeRatioByDie(die) {
 
 /**math **/
 
+/* factorial. */
 function productRange(a,b) {
   var product=a,i=a;
-
   while (i++<b) {
     product*=i;
   }
@@ -354,7 +354,7 @@ function redraw() {
 	log = "";
 
 
-	var chartData = [["Success Sides >= N","Fortune","Characteristic","Expertise","Reckless","Conservative"]];
+	var chartData = [["Success Sides >= N","Fortune","Characteristic","Expertise","Reckless","Conservative","Combined"]];
 	var fortuneData = [];
 	var characteristicData = [];
 	var expertiseData = [];
@@ -397,16 +397,21 @@ function redraw() {
 		conservativeDieCount = 0;
 	}
 
-	var big = Math.max(fortuneDieCount, characteristicDieCount, expertiseDieCount, recklessDieCount, conservativeDieCount);
-	fortuneData = padArrayWithZeros(fortuneData, big);
-	characteristicData = padArrayWithZeros(characteristicData, big);
-	expertiseData = padArrayWithZeros(expertiseData, big);
-	recklessData = padArrayWithZeros(recklessData, big);
-	conservativeData = padArrayWithZeros(conservativeData, big);
+	// i suppose you could take the average ratio for success for the pool, and build the line from 1 .. total dice in pool based on that.
+	// lets try that
+	var goodDicePool = (fortuneDieCount+characteristicDieCount+expertiseDieCount+recklessDieCount+conservativeDieCount);
+	var megaRatio = ((fortuneDieCount*successRatioByDie("Fortune"))+(characteristicDieCount*successRatioByDie("Characteristic"))+(expertiseDieCount*successRatioByDie("Expertise"))+(recklessDieCount*successRatioByDie("Reckless"))+conservativeDieCount*successRatioByDie("Conservative"))/goodDicePool;
+	var combinedData = calculateAndDisplay("Combined",goodDicePool,megaRatio);
+
+	fortuneData = padArrayWithZeros(fortuneData, goodDicePool);
+	characteristicData = padArrayWithZeros(characteristicData, goodDicePool);
+	expertiseData = padArrayWithZeros(expertiseData, goodDicePool);
+	recklessData = padArrayWithZeros(recklessData, goodDicePool);
+	conservativeData = padArrayWithZeros(conservativeData, goodDicePool);
 
 	/* turn the matrix on its side to fit the charting tool */
-	for (var i = 0; i < big; i++) {
-		chartData.push([(i+1) + "", fortuneData[i], characteristicData[i], expertiseData[i], recklessData[i], conservativeData[i]]);
+	for (var i = 0; i < goodDicePool; i++) {
+		chartData.push([(i+1) + "", fortuneData[i], characteristicData[i], expertiseData[i], recklessData[i], conservativeData[i], combinedData[i]]);
 	}
 
 	drawChart(chartData);
@@ -418,7 +423,7 @@ function drawChart(data_) {
 
 	var options = {
 	  title: '% Chance of At Least X Success Sides By Die',
-	  colors: ['grey', 'blue', 'gold', 'red', 'green'],
+	  colors: ['grey', 'blue', 'gold', 'red', 'green', 'brown'],
 	  seriesType: "bar"
 	};
 
@@ -426,9 +431,13 @@ function drawChart(data_) {
 	chart.draw(data, options);
 }
 
-function calculateAndDisplay(dieName, qty) {
-
-	var ratio = successRatioByDie(dieName);
+function calculateAndDisplay(dieName, qty, ratio_) {
+	var ratio = 0;
+	if (ratio_) {
+		ratio = ratio_;
+	} else {
+		ratio = successRatioByDie(dieName);
+	}
 	var cumulativeChanceForCompleteSuccess = 1;
 	var totalPossibleSuccesesForSet = 0;
 
@@ -450,7 +459,10 @@ function calculateAndDisplay(dieName, qty) {
 	log = log + " + At least 1 successes of " + qty + " = " + (theChanceForSomething*100).toPrecision(4) + "%.<br/>";
 
 	for(var dieIndex = 1; dieIndex <= qty; dieIndex++) {
-		totalPossibleSuccesesForSet = totalPossibleSuccesesForSet + totalPossibleSuccessesByDie(dieName)
+
+		if (!ratio_) {
+			totalPossibleSuccesesForSet = totalPossibleSuccesesForSet + totalPossibleSuccessesByDie(dieName);
+		}
 		var dieIndexOrLessOfQty =  distribution(qty, ratio, 0,dieIndex);
 		var betweenOneAndDieIndexOfQty =  distribution(qty, ratio, 1,dieIndex);
 		log = log + " + Between 1 and " + dieIndex + " successes of " + qty + " = " + (betweenOneAndDieIndexOfQty*100).toPrecision(4) + "%.<br/>";
@@ -464,7 +476,9 @@ function calculateAndDisplay(dieName, qty) {
 		}
 	}	
 	log = log + " + Maximum # of success hammers for like dice (not counting rerolls for righteous success) is " + totalPossibleSuccesesForSet + ".<br/>";
+
 	$('#log').html(log);
+
 	return returnData;
 }
 
