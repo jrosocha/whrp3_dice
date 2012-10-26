@@ -434,18 +434,29 @@ function calculateAndDisplay(dieName, qty) {
 
 	var returnData = [];	
 	log = log + dieName + " die chance for (1) success is " + (100*ratio).toPrecision(4) + "%.<br/>";
+
+	/** compute chance for nothing. basiclly doing this twice, as the last between 1 and n successes is the same thing*/
+	var chanceForNoSucess = 0;
+	for(var x=0; x < qty; x++) {
+		if (chanceForNoSucess==0) {
+			chanceForNoSucess=(1-ratio);
+		} else {
+			chanceForNoSucess=chanceForNoSucess * (1-ratio);
+		}
+	}
+	/* the chance for at least something is 1 - the chance for nothing */ 
+	var theChanceForSomething = 1-chanceForNoSucess;
+	returnData.push(parseFloat((theChanceForSomething*100).toPrecision(4)));
+	log = log + " + At least 1 successes of " + qty + " = " + (theChanceForSomething*100).toPrecision(4) + "%.<br/>";
+
 	for(var dieIndex = 1; dieIndex <= qty; dieIndex++) {
-
-
 		totalPossibleSuccesesForSet = totalPossibleSuccesesForSet + totalPossibleSuccessesByDie(dieName)
 		var dieIndexOrLessOfQty =  distribution(qty, ratio, 0,dieIndex);
 		var betweenOneAndDieIndexOfQty =  distribution(qty, ratio, 1,dieIndex);
 		log = log + " + Between 1 and " + dieIndex + " successes of " + qty + " = " + (betweenOneAndDieIndexOfQty*100).toPrecision(4) + "%.<br/>";
 		cumulativeChanceForCompleteSuccess = cumulativeChanceForCompleteSuccess * ratio;
 		log = log + " + Chance of exactly " + dieIndex + " out of " + dieIndex + " successes = " + (cumulativeChanceForCompleteSuccess*100).toPrecision(4) + "%.<br>"; 
-		if (dieIndex == 1) {
-			returnData.push(parseFloat((betweenOneAndDieIndexOfQty*100).toPrecision(4)));
-		}
+
 		if (dieIndex < qty) {
 			var atLeastDieIndexPlusOne = 1 - dieIndexOrLessOfQty;
 			log = log + " + At least " + (dieIndex + 1) + " successes = " + (atLeastDieIndexPlusOne*100).toPrecision(4) + "%.<br/>";
