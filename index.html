@@ -40,13 +40,10 @@
 
      <input type="button" onclick="redraw();" value="Go" style="display:block;" />
 </div>
-<div id="chart_div"></div>
+<div id="exactly_chart_div"></div>
+<div id="atleast_chart_div"></div>
 <div id="log">
 </div>
-
-
-
-
 <body>
 <div>
 </div>
@@ -54,14 +51,7 @@
 <script>
 google.load("visualization", "1", {packages:["corechart"]});
 
-/*
-Trait: 2 empty, 4 successes, 2 boons
-Conservative: 1 empty, 2 boons, 4 successes, 1 succ+boon, 2 succ+delay
-Reckless: 2 empty, 2 banes, 1 double-boon, 1 succ+boon, 2 double-succ, 2 succ+fatigue
-Fortune: 3 empty, 2 successes, 1 boon
-Misfortune: 3 empty, 2 failures, 1 bane
-Chaos: 1 empty, 1 chaos star, 1 bane, 1 double-bane, 2 failures, 2 double-failures
-*/
+
 var dieHash = {
 		Template:{
 					success_1:[0,0],
@@ -198,21 +188,7 @@ var dieHash = {
 					nothing:[1,8]					
 		}					
 	};
-/*
-function x(num_fortune, num_misfortune) {
 
-	var output = "";
-
-	var totalPossibleSuccesses = (totalPossibleSuccessesByDie(Fortune) * num_fortune);
-	var totalPossibleChallengesByDie = (totalPossibleSuccessesByDie(Fortune) * num_fortune);
-
-	for (var possibeSuccessCount = 0; i < totalPossibleSuccesses; possibeSuccessCount++) {
-
-
-
-	}
-}
-*/
 
 function totalPossibleSuccessesByDie(die) {
 	var success = 0;
@@ -353,47 +329,49 @@ function padArrayWithZeros( arr, length) {
 function redraw() {
 	$('#log').html("");
 	log = "";
+	redrawAtLeastNSuccessChart();
+	redrawExactlyNSucessesChart();
+}
 
-
-	var chartData = [["Success Sides >= N","Fortune","Characteristic","Expertise","Reckless","Conservative","Combined"]];
+function redrawExactlyNSucessesChart() {
+	var chartData = [["Success Sides == N","Fortune","Characteristic","Expertise","Reckless","Conservative","Combined"]];
 	var fortuneData = [];
 	var characteristicData = [];
 	var expertiseData = [];
 	var recklessData = [];
 	var conservativeData = [];
-
 	var fortuneDieCount = parseInt($('#inputFortune').val());
 
 	if (fortuneDieCount > 0) {
-		fortuneData = calculateAndDisplay("Fortune", fortuneDieCount);
+		fortuneData = calculateExactly1ToQtySucesses("Fortune", fortuneDieCount);
 	} else {
 		fortuneDieCount = 0;
 	}
 
 	var characteristicDieCount = parseInt($('#inputCharacteristic').val());
 	if (characteristicDieCount > 0) {
-		characteristicData = calculateAndDisplay("Characteristic", characteristicDieCount);
+		characteristicData = calculateExactly1ToQtySucesses("Characteristic", characteristicDieCount);
 	} else {
 		characteristicDieCount = 0;
 	}
 
 	var expertiseDieCount = parseInt($('#inputExpertise').val());
 	if (expertiseDieCount > 0) {
-		expertiseData = calculateAndDisplay("Expertise", expertiseDieCount);
+		expertiseData = calculateExactly1ToQtySucesses("Expertise", expertiseDieCount);
 	} else {
 		expertiseDieCount = 0;
 	}
 
 	var recklessDieCount = parseInt($('#inputReckless').val());
 	if (recklessDieCount > 0) {
-		recklessData = calculateAndDisplay("Reckless", recklessDieCount);
+		recklessData = calculateExactly1ToQtySucesses("Reckless", recklessDieCount);
 	} else {
 		recklessDieCount = 0;
 	}		
 
 	var conservativeDieCount = parseInt($('#inputConservative').val());
 	if (conservativeDieCount > 0) {
-		conservativeData = calculateAndDisplay("Conservative", conservativeDieCount);
+		conservativeData = calculateExactly1ToQtySucesses("Conservative", conservativeDieCount);
 	} else {
 		conservativeDieCount = 0;
 	}
@@ -402,7 +380,7 @@ function redraw() {
 	// lets try that
 	var goodDicePool = (fortuneDieCount+characteristicDieCount+expertiseDieCount+recklessDieCount+conservativeDieCount);
 	var megaRatio = ((fortuneDieCount*successRatioByDie("Fortune"))+(characteristicDieCount*successRatioByDie("Characteristic"))+(expertiseDieCount*successRatioByDie("Expertise"))+(recklessDieCount*successRatioByDie("Reckless"))+conservativeDieCount*successRatioByDie("Conservative"))/goodDicePool;
-	var combinedData = calculateAndDisplay("Combined",goodDicePool,megaRatio);
+	var combinedData = calculateExactly1ToQtySucesses("Combined",goodDicePool,megaRatio);
 
 	fortuneData = padArrayWithZeros(fortuneData, goodDicePool);
 	characteristicData = padArrayWithZeros(characteristicData, goodDicePool);
@@ -415,11 +393,90 @@ function redraw() {
 		chartData.push([(i+1) + "", fortuneData[i], characteristicData[i], expertiseData[i], recklessData[i], conservativeData[i], combinedData[i]]);
 	}
 
-	drawChart(chartData);
+	drawExactlyNSucessesChart(chartData);
 }
 
 
-function drawChart(data_) {
+function redrawAtLeastNSuccessChart() {
+
+	var chartData = [["Success Sides >= N","Fortune","Characteristic","Expertise","Reckless","Conservative","Combined"]];
+	var fortuneData = [];
+	var characteristicData = [];
+	var expertiseData = [];
+	var recklessData = [];
+	var conservativeData = [];
+
+	var fortuneDieCount = parseInt($('#inputFortune').val());
+
+	if (fortuneDieCount > 0) {
+		fortuneData = calculateAtLeast1ToQtySucesses("Fortune", fortuneDieCount);
+	} else {
+		fortuneDieCount = 0;
+	}
+
+	var characteristicDieCount = parseInt($('#inputCharacteristic').val());
+	if (characteristicDieCount > 0) {
+		characteristicData = calculateAtLeast1ToQtySucesses("Characteristic", characteristicDieCount);
+	} else {
+		characteristicDieCount = 0;
+	}
+
+	var expertiseDieCount = parseInt($('#inputExpertise').val());
+	if (expertiseDieCount > 0) {
+		expertiseData = calculateAtLeast1ToQtySucesses("Expertise", expertiseDieCount);
+	} else {
+		expertiseDieCount = 0;
+	}
+
+	var recklessDieCount = parseInt($('#inputReckless').val());
+	if (recklessDieCount > 0) {
+		recklessData = calculateAtLeast1ToQtySucesses("Reckless", recklessDieCount);
+	} else {
+		recklessDieCount = 0;
+	}		
+
+	var conservativeDieCount = parseInt($('#inputConservative').val());
+	if (conservativeDieCount > 0) {
+		conservativeData = calculateAtLeast1ToQtySucesses("Conservative", conservativeDieCount);
+	} else {
+		conservativeDieCount = 0;
+	}
+
+	// i suppose you could take the average ratio for success for the pool, and build the line from 1 .. total dice in pool based on that.
+	// lets try that
+	var goodDicePool = (fortuneDieCount+characteristicDieCount+expertiseDieCount+recklessDieCount+conservativeDieCount);
+	var megaRatio = ((fortuneDieCount*successRatioByDie("Fortune"))+(characteristicDieCount*successRatioByDie("Characteristic"))+(expertiseDieCount*successRatioByDie("Expertise"))+(recklessDieCount*successRatioByDie("Reckless"))+conservativeDieCount*successRatioByDie("Conservative"))/goodDicePool;
+	var combinedData = calculateAtLeast1ToQtySucesses("Combined",goodDicePool,megaRatio);
+
+	fortuneData = padArrayWithZeros(fortuneData, goodDicePool);
+	characteristicData = padArrayWithZeros(characteristicData, goodDicePool);
+	expertiseData = padArrayWithZeros(expertiseData, goodDicePool);
+	recklessData = padArrayWithZeros(recklessData, goodDicePool);
+	conservativeData = padArrayWithZeros(conservativeData, goodDicePool);
+
+	/* turn the matrix on its side to fit the charting tool */
+	for (var i = 0; i < goodDicePool; i++) {
+		chartData.push([(i+1) + "", fortuneData[i], characteristicData[i], expertiseData[i], recklessData[i], conservativeData[i], combinedData[i]]);
+	}
+
+	drawAtLeastNSucessesChart(chartData);
+}
+
+function drawExactlyNSucessesChart(data_) {
+	var data = google.visualization.arrayToDataTable(data_);
+
+	var options = {
+	  title: '% Chance of Exactly N Sucesses',
+	  colors: ['grey', 'blue', 'gold', 'red', 'green', 'brown'],
+	  seriesType: "bar",
+	  height: 400
+	};
+
+	var chart = new google.visualization.ComboChart(document.getElementById('exactly_chart_div'));
+	chart.draw(data, options);
+}
+
+function drawAtLeastNSucessesChart(data_) {
 	var data = google.visualization.arrayToDataTable(data_);
 
 	var options = {
@@ -429,24 +486,29 @@ function drawChart(data_) {
 	  height: 400
 	};
 
-	var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+	var chart = new google.visualization.ComboChart(document.getElementById('atleast_chart_div'));
 	chart.draw(data, options);
 }
 
-function calculateAndDisplay(dieName, qty, ratio_) {
-	var ratio = 0;
+/*
+ * Given a die and a qty, return an array of chances for at least n sucesses for 1..qty.
+ * If a ratio is passed, use that in place of the die's ratio. 
+ */
+function calculateAtLeast1ToQtySucesses(dieName, qty, ratio_) {
+	var ratio = 0; // ratio used for calcutaions
+	var cumulativeChanceForCompleteSuccess = 1;
+	var totalPossibleHammersForSet = 0;
+	var returnDataAtLeastNSucesses = []; // an array of 4 precision %'s for each at least 1..qty successes
+
+	// determine if you are using die's base ratio or a passed in ratio	
 	if (ratio_) {
 		ratio = ratio_;
 	} else {
 		ratio = successRatioByDie(dieName);
 	}
-	var cumulativeChanceForCompleteSuccess = 1;
-	var totalPossibleSuccesesForSet = 0;
-
-	var returnData = [];	
 	log = log + dieName + " die chance for (1) success is " + (100*ratio).toPrecision(4) + "%.<br/>";
 
-	/** compute chance for nothing. basiclly doing this twice, as the last between 1 and n successes is the same thing*/
+	// compute chance for nothing. basiclly doing this twice, as the last between 1 and n successes is the same thing
 	var chanceForNoSucess = 0;
 	for(var x=0; x < qty; x++) {
 		if (chanceForNoSucess==0) {
@@ -455,15 +517,14 @@ function calculateAndDisplay(dieName, qty, ratio_) {
 			chanceForNoSucess=chanceForNoSucess * (1-ratio);
 		}
 	}
-	/* the chance for at least something is 1 - the chance for nothing */ 
+	// the chance for at least something is 1 - the chance for nothing
 	var theChanceForSomething = 1-chanceForNoSucess;
-	returnData.push(parseFloat((theChanceForSomething*100).toPrecision(4)));
+	returnDataAtLeastNSucesses.push(parseFloat((theChanceForSomething*100).toPrecision(4)));
 	log = log + " + At least 1 successes of " + qty + " = " + (theChanceForSomething*100).toPrecision(4) + "%.<br/>";
 
 	for(var dieIndex = 1; dieIndex <= qty; dieIndex++) {
-
 		if (!ratio_) {
-			totalPossibleSuccesesForSet = totalPossibleSuccesesForSet + totalPossibleSuccessesByDie(dieName);
+			totalPossibleHammersForSet = totalPossibleHammersForSet + totalPossibleSuccessesByDie(dieName);
 		}
 		var dieIndexOrLessOfQty =  distribution(qty, ratio, 0,dieIndex);
 		var betweenOneAndDieIndexOfQty =  distribution(qty, ratio, 1,dieIndex);
@@ -474,16 +535,30 @@ function calculateAndDisplay(dieName, qty, ratio_) {
 		if (dieIndex < qty) {
 			var atLeastDieIndexPlusOne = 1 - dieIndexOrLessOfQty;
 			log = log + " + At least " + (dieIndex + 1) + " successes = " + (atLeastDieIndexPlusOne*100).toPrecision(4) + "%.<br/>";
-			returnData.push(parseFloat((atLeastDieIndexPlusOne*100).toPrecision(4)));
+			returnDataAtLeastNSucesses.push(parseFloat((atLeastDieIndexPlusOne*100).toPrecision(4)));
 		}
 	}	
-	log = log + " + Maximum # of success hammers for like dice (not counting rerolls for righteous success) is " + totalPossibleSuccesesForSet + ".<br/>";
+	log = log + " + Maximum # of success hammers for like dice (not counting rerolls for righteous success) is " + totalPossibleHammersForSet + ".<br/>";
 
 	$('#log').html(log);
 
-	return returnData;
+	return returnDataAtLeastNSucesses;
 }
 
+function calculateExactly1ToQtySucesses(dieName, qty, ratio_) {
+	var ratio = 0; // ratio used for calcutaions
+	var returnDataExactlyNSucesses = []; // an array of 4 precision %'s for each at least 1..qty successes
+	// determine if you are using die's base ratio or a passed in ratio	
+	if (ratio_) {
+		ratio = ratio_;
+	} else {
+		ratio = successRatioByDie(dieName);
+	}
+	for(var dieIndex = 1; dieIndex <= qty; dieIndex++) {
+		returnDataExactlyNSucesses.push(parseFloat((probability(qty,dieIndex,ratio)*100).toPrecision(4)));
+	}	
+	return returnDataExactlyNSucesses;
+}
 
 
 </script>
