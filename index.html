@@ -40,6 +40,7 @@
 
      <input type="button" onclick="redraw();" value="Go" style="display:block;" />
 </div>
+<div id="hammers_chart_div"></div>
 <div id="exactly_chart_div"></div>
 <div id="atleast_chart_div"></div>
 <div id="log">
@@ -68,7 +69,7 @@ var dieHash = {
 					bane_1:[0,0],
 					bane_2:[0,0],
 					chaos_star_1:[0,0],
-					nothing:[0,0]					
+					nothing:[0,0]				
 		},
 		Expertise:{
 					success_1:[1,6],
@@ -331,6 +332,7 @@ function redraw() {
 	log = "";
 	redrawAtLeastNSuccessChart();
 	redrawExactlyNSucessesChart();
+	redrawHammerChart();
 }
 
 function redrawExactlyNSucessesChart() {
@@ -465,10 +467,15 @@ function redrawAtLeastNSuccessChart() {
 function drawExactlyNSucessesChart(data_) {
 	var data = google.visualization.arrayToDataTable(data_);
 
+	
+
 	var options = {
 	  title: '% Chance of Exactly N Sucess Sides',
+	  vAxis: {title: "% Chance"},
+      hAxis: {title: "Success Sides"},
 	  colors: ['grey', 'blue', 'gold', 'red', 'green', 'brown'],
-	  seriesType: "bar",
+	  seriesType: "bars",
+	  series: {5: {type: "line"}},
 	  height: 400
 	};
 
@@ -482,11 +489,29 @@ function drawAtLeastNSucessesChart(data_) {
 	var options = {
 	  title: '% Chance of At Least X Success Sides By Die',
 	  colors: ['grey', 'blue', 'gold', 'red', 'green', 'brown'],
-	  seriesType: "bar",
+	  vAxis: {title: "% Chance"},
+      hAxis: {title: "Success Sides"},
+	  seriesType: "bars",
+	  series: {5: {type: "line"}},
 	  height: 400
 	};
 
 	var chart = new google.visualization.ComboChart(document.getElementById('atleast_chart_div'));
+	chart.draw(data, options);
+}
+
+function drawHammersChart(data_) {
+	var data = google.visualization.arrayToDataTable(data_);
+
+	var options = {
+	  title: '% Chance of N Hammers',
+	  colors: ['green','gold'],
+	  vAxis: {title: "% Chance"},
+      hAxis: {title: "Hammers"},
+	  height: 400
+	};
+
+	var chart = new google.visualization.LineChart(document.getElementById('hammers_chart_div'));
 	chart.draw(data, options);
 }
 
@@ -544,6 +569,71 @@ function calculateAtLeast1ToQtySucesses(dieName, qty, ratio_) {
 
 	return returnDataAtLeastNSucesses;
 }
+
+function redrawHammerChart() {
+var chartData = [["Hammers","Exactly","At Least"]];
+	var fortuneData = [];
+	var characteristicData = [];
+	var expertiseData = [];
+	var recklessData = [];
+	var conservativeData = [];
+	var fortuneDieCount = parseInt($('#inputFortune').val());
+
+	if (fortuneDieCount > 0) {
+		//fortuneData = calculateExactly1ToQtySucesses("Fortune", fortuneDieCount);
+	} else {
+		fortuneDieCount = 0;
+	}
+
+	var characteristicDieCount = parseInt($('#inputCharacteristic').val());
+	if (characteristicDieCount > 0) {
+		//characteristicData = calculateExactly1ToQtySucesses("Characteristic", characteristicDieCount);
+	} else {
+		characteristicDieCount = 0;
+	}
+
+	var expertiseDieCount = parseInt($('#inputExpertise').val());
+	if (expertiseDieCount > 0) {
+		//expertiseData = calculateExactly1ToQtySucesses("Expertise", expertiseDieCount);
+	} else {
+		expertiseDieCount = 0;
+	}
+
+	var recklessDieCount = parseInt($('#inputReckless').val());
+	if (recklessDieCount > 0) {
+		//recklessData = calculateExactly1ToQtySucesses("Reckless", recklessDieCount);
+	} else {
+		recklessDieCount = 0;
+	}		
+
+	var conservativeDieCount = parseInt($('#inputConservative').val());
+	if (conservativeDieCount > 0) {
+		//conservativeData = calculateExactly1ToQtySucesses("Conservative", conservativeDieCount);
+	} else {
+		conservativeDieCount = 0;
+	}
+
+
+	var maxSuccesses = (fortuneDieCount+characteristicDieCount+(expertiseDieCount*2)+(recklessDieCount*2)+conservativeDieCount);
+
+
+	var megaRatio = ((fortuneDieCount*successRatioByDie("Fortune"))+(characteristicDieCount*successRatioByDie("Characteristic"))+(expertiseDieCount*successRatioByDie("Expertise"))+(expertiseDieCount*(1/6)*(1/6))+(recklessDieCount*successRatioByDie("Reckless"))+(recklessDieCount*.2)+conservativeDieCount*successRatioByDie("Conservative"))/maxSuccesses;
+	var exactlyData = calculateExactly1ToQtySucesses("Exactly",maxSuccesses,megaRatio);
+	var atLeastData = calculateAtLeast1ToQtySucesses("At Least",maxSuccesses,megaRatio);
+	//fortuneData = padArrayWithZeros(fortuneData, goodDicePool);
+	//characteristicData = padArrayWithZeros(characteristicData, goodDicePool);
+	//expertiseData = padArrayWithZeros(expertiseData, goodDicePool);
+	//recklessData = padArrayWithZeros(recklessData, goodDicePool);
+	//conservativeData = padArrayWithZeros(conservativeData, goodDicePool);
+
+	/* turn the matrix on its side to fit the charting tool */
+	for (var i = 0; i < maxSuccesses; i++) {
+		chartData.push([(i+1) + "", exactlyData[i], atLeastData[i]]);
+	}
+
+	drawHammersChart(chartData);
+}
+
 
 function calculateExactly1ToQtySucesses(dieName, qty, ratio_) {
 	var ratio = 0; // ratio used for calcutaions
