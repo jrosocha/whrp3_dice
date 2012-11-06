@@ -598,7 +598,7 @@ function calculateAtLeast1ToQtySucesses(dieName, qty, ratio) {
 */
 function redrawHammerChart(maxSuccessSides) {
 
-	var chartData=[["Success Sides","Avg Hammers", "Max Hammers"]];
+	var chartData=[["Success Sides","Avg Hammers", "Max Hammers", "Min Hammers"]];
 	var maxHammers = (recklessDieCount + expertiseDieCount) * 2 + fortuneDieCount + characteristicDieCount + conservativeDieCount;
 	var maxHammerDie = 1;
 	if ((recklessDieCount>0 || expertiseDieCount>0)) {
@@ -607,7 +607,7 @@ function redrawHammerChart(maxSuccessSides) {
 
 	var hammerRatio=calculateHammerToSuccessSideAvg(); 
 	for (var side=1; side<=maxSuccessSides; side++) {
-		chartData.push([side, (side*hammerRatio), (side*maxHammerDie)]);
+		chartData.push([side, (side*hammerRatio), (side*maxHammerDie), side]);
 	}
 
 	var data = google.visualization.arrayToDataTable(chartData);
@@ -653,8 +653,8 @@ function redraw() {
 	$('#log').html("");
 	log = "";
 	clenseInput();
-	var combinedAtLeastData = redrawAtLeastNSuccessChart();
-	var combinedExactlyData = redrawExactlyNSucessesChart();
+	redrawAtLeastNSuccessChart();
+	redrawExactlyNSucessesChart();
 	
 	redrawHammerChart(getGoodDicePoolCount());
 }
